@@ -7,13 +7,36 @@ export default function Signup() {
   const router = useRouter();
 
   const handleSignup = () => {
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    users.push(form);
-    localStorage.setItem("users", JSON.stringify(users));
+  if (!validate()) return;
 
-    alert("Signup successful!");
-    router.push("/login");
-  };
+  const users = JSON.parse(localStorage.getItem("users") || "[]");
+
+  users.push(form);
+  localStorage.setItem("users", JSON.stringify(users));
+
+  alert("Signup successful!");
+  router.push("/login");
+};
+
+  const validate = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^[0-9]{10}$/;
+  const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])/;
+
+  const { email, password } = form;
+
+  if (!emailRegex.test(email) && !phoneRegex.test(email)) {
+    alert("Invalid email or phone number");
+    return false;
+  }
+
+  if (!passwordRegex.test(password)) {
+    alert("Password must contain number & special character");
+    return false;
+  }
+
+  return true;
+};
 
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-3">
