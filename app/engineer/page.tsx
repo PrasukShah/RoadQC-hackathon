@@ -41,7 +41,15 @@ export default function EngineerPage() {
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setPhoto(URL.createObjectURL(file));
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+        setPhoto(reader.result as string); // ✅ FIX: store Base64
+        };
+
+        reader.readAsDataURL(file);
+    }
   };
 
   const submitReport = () => {
@@ -53,9 +61,7 @@ export default function EngineerPage() {
     setLoading(true);
 
     setTimeout(() => {
-      const isSpoofed =
-        Math.abs(location.lat - TARGET_LAT) > 0.1 ||
-        Math.abs(location.lng - TARGET_LNG) > 0.1;
+      const isSpoofed = Math.random() < 0.3; // 30% fraud simulation
 
       const newReport: Report = {
         id: Math.random().toString(36).substring(7),

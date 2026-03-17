@@ -75,7 +75,8 @@ export default function AdminPage() {
                   <td className="p-3">
                     <img
                       src={r.photoUrl}
-                      className="w-16 h-16 rounded-lg object-cover shadow"
+                      onError={(e) => (e.currentTarget.src = "/fallback.png")}
+                      className="w-16 h-16 object-cover rounded"
                     />
                   </td>
 
@@ -96,11 +97,11 @@ export default function AdminPage() {
                   <td className="p-3">
                     {r.isSpoofed ? (
                       <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
-                        🚨 Fraud Detected
+                        Fraud Detected
                       </span>
                     ) : (
                       <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
-                        ✅ Verified
+                        Verified
                       </span>
                     )}
                   </td>
