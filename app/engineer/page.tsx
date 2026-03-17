@@ -1,130 +1,123 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function EngineerPage() {
-  const [video, setVideo] = useState("");
-  const [location, setLocation] = useState("");
-  const [materialQuality, setMaterialQuality] = useState("");
-  const [roadQuality, setRoadQuality] = useState("");
-  const [showMetrics, setShowMetrics] = useState(false);
+  const [locationName, setLocationName] = useState("");
+  const [video, setVideo] = useState<string | null>(null);
+  const [roadQuality, setRoadQuality] = useState<number | null>(null);
+  const [materialQuality, setMaterialQuality] = useState<number | null>(null);
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-          );
-          const data = await res.json();
-
-          setLocation(
-            data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            "Unknown Location"
-          );
-        } catch {
-          setLocation("Location fetch failed");
-        }
-      });
+    const user = JSON.parse(localStorage.getItem("currentUser") || "null");
+    if (!user || user.role !== "engineer") {
+      window.location.href = "/login";
     }
   }, []);
 
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
+  // 📍 AUTO LOCATION
+  const fetchLocation = () => {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
 
-  if (file) {
-    const reader = new FileReader();
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+      );
+      const data = await res.json();
+      setLocationName(data.display_name);
+    });
+  };
 
-    reader.onloadend = () => {
-      setVideo(reader.result as string);
-      setShowMetrics(true);
-    };
+  // 🤖 AUTO QUALITY SCORE (SIMULATED AI)
+  const calculateQuality = () => {
+    const road = Math.floor(60 + Math.random() * 40);
+    const material = Math.floor(50 + Math.random() * 50);
 
-    reader.readAsDataURL(file);
-  }
-};
+    setRoadQuality(road);
+    setMaterialQuality(material);
+  };
 
-  const handleSubmit = () => {
-    if (!video) return alert("Upload video first");
-    if (!materialQuality || !roadQuality)
-      return alert("Enter quality metrics");
+  // 🎥 VIDEO UPLOAD
+  const handleVideoUpload = (e: any) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVideo(reader.result as string);
+        calculateQuality(); // auto scoring
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const submitReport = () => {
+    if (!locationName || !video) {
+      alert("Fill all fields");
+      return;
+    }
 
     const report = {
-      id: Date.now(), // ✅ FIX
-      locationName: location, // ✅ FIX (match other pages)
-      videoUrl: video, // ✅ FIX
-      materialQuality,
+      id: Date.now(),
+      locationName,
+      videoUrl: video,
       roadQuality,
+      materialQuality,
       timestamp: new Date().toLocaleString(),
-      status:
-        Number(materialQuality) < 50 || Number(roadQuality) < 50
-          ? "Poor ❌"
-          : "Good ✅",
+      contractor: "ABC Infra Ltd",
+      projectId: "NH-48",
     };
 
-    const reports = JSON.parse(localStorage.getItem("reports") || "[]");
-    reports.push(report);
-    localStorage.setItem("reports", JSON.stringify(reports));
+    const old = JSON.parse(localStorage.getItem("reports") || "[]");
+    localStorage.setItem("reports", JSON.stringify([report, ...old]));
 
-    alert("Submitted ✅");
-
-    setVideo("");
-    setMaterialQuality("");
-    setRoadQuality("");
-    setShowMetrics(false);
+    alert("Report Submitted!");
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-center">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-xl">
+    <div className="min-h-screen bg-gray-50 p-6">
 
-        <h2 className="text-2xl font-bold text-center mb-4">
-          Engineer Upload
-        </h2>
+      <div className="flex justify-between max-w-4xl mx-auto mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">🚧 Engineer Panel</h1>
+        <button className="bg-red-500 text-white px-4 py-2 rounded"
+          onClick={() => {
+            localStorage.removeItem("currentUser");
+            window.location.href = "/login";
+          }}>
+          Logout
+        </button>
+      </div>
+
+      <div className="max-w-md mx-auto bg-white p-6 rounded-xl shadow border space-y-4">
+
+        <button onClick={fetchLocation} className="bg-blue-600 text-white px-3 py-2 rounded">
+          📍 Get Location
+        </button>
 
         <input
-          value={location}
+          value={locationName}
           readOnly
-          className="w-full border p-3 rounded mb-4 bg-gray-100"
+          className="w-full border p-2 rounded text-gray-700"
         />
 
-        <label className="block p-6 border-2 border-dashed rounded text-center cursor-pointer">
-          Upload Video
-          <input type="file" accept="video/*" hidden onChange={handleVideoUpload}/>
-        </label>
+        <input type="file" accept="video/*" onChange={handleVideoUpload} />
 
-        {video && (
-          <video src={video} controls className="w-full mt-4 rounded"/>
-        )}
+        {video && <video src={video} controls className="w-full rounded border" />}
 
-        {showMetrics && (
-          <div className="mt-4 space-y-2">
-            <input
-              type="number"
-              placeholder="Material Quality"
-              onChange={(e) => setMaterialQuality(e.target.value)}
-              className="w-full border p-2 rounded"
-            />
-            <input
-              type="number"
-              placeholder="Road Quality"
-              onChange={(e) => setRoadQuality(e.target.value)}
-              className="w-full border p-2 rounded"
-            />
+        {roadQuality && (
+          <div className="text-gray-800 font-semibold">
+            Road Quality: {roadQuality}
           </div>
         )}
 
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-green-600 text-white py-2 mt-4 rounded"
-        >
+        {materialQuality && (
+          <div className="text-gray-800 font-semibold">
+            Material Quality: {materialQuality}
+          </div>
+        )}
+
+        <button onClick={submitReport}
+          className="w-full bg-green-600 text-white py-2 rounded">
           Submit
         </button>
-
       </div>
     </div>
   );
