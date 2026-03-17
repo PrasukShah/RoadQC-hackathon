@@ -20,8 +20,10 @@ export default function Login() {
 
     localStorage.setItem("currentUser", JSON.stringify(user));
 
-    if (user.role === "admin") {
-      router.push("/admin");
+    if (user.role === "contractor") {
+      router.push("/contractor");
+    } else if (user.role === "inspector") {
+      router.push("/inspector");
     } else {
       router.push("/engineer");
     }

@@ -1,25 +1,24 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 type Report = {
   id: string;
   timestamp: string;
-  latitude: number | null;
-  longitude: number | null;
-  photoUrl: string | null;
-  aiScore: number;
-  isSpoofed: boolean;
+  locationName: string;
+  videoUrl: string;
+  roadQuality: number;
+  materialQuality: number;
+  contractor: string;
+  projectId: string;
 };
 
-const TARGET_LAT = 28.6139;
-const TARGET_LNG = 77.2090;
-
 export default function EngineerPage() {
-  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [locationName, setLocationName] = useState("");
+  const [video, setVideo] = useState<string | null>(null);
+  const [roadQuality, setRoadQuality] = useState<number>(0);
+  const [materialQuality, setMaterialQuality] = useState<number>(0);
 
+  // 🔐 Protect route
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("currentUser") || "null");
     if (!user || user.role !== "engineer") {
@@ -27,145 +26,116 @@ export default function EngineerPage() {
     }
   }, []);
 
-  const captureLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        });
-      },
-      () => alert("Location denied")
-    );
-  };
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 🎥 Handle Video Upload
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        const reader = new FileReader();
-
-        reader.onloadend = () => {
-        setPhoto(reader.result as string); // ✅ FIX: store Base64
-        };
-
-        reader.readAsDataURL(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setVideo(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
+  // 🚀 Submit Report
   const submitReport = () => {
-    if (!location || !photo) {
-      alert("Complete all steps!");
+    if (!locationName || !video) {
+      alert("Please fill all fields!");
       return;
     }
 
-    setLoading(true);
+    const newReport: Report = {
+      id: Date.now().toString(),
+      timestamp: new Date().toLocaleString(),
+      locationName,
+      videoUrl: video,
+      roadQuality,
+      materialQuality,
+      contractor: "ABC Infra Ltd",
+      projectId: "NH-48-001",
+    };
 
-    setTimeout(() => {
-      const isSpoofed = Math.random() < 0.3; // 30% fraud simulation
+    const existing = JSON.parse(localStorage.getItem("reports") || "[]");
+    localStorage.setItem("reports", JSON.stringify([newReport, ...existing]));
 
-      const newReport: Report = {
-        id: Math.random().toString(36).substring(7),
-        timestamp: new Date().toLocaleString(),
-        latitude: location.lat,
-        longitude: location.lng,
-        photoUrl: photo,
-        aiScore: Math.floor(Math.random() * 50) + 50,
-        isSpoofed,
-      };
+    alert("Report submitted successfully!");
 
-      const existing = JSON.parse(localStorage.getItem("reports") || "[]");
-      localStorage.setItem("reports", JSON.stringify([newReport, ...existing]));
-
-      setLocation(null);
-      setPhoto(null);
-      setLoading(false);
-
-      alert("Report submitted successfully!");
-    }, 1500);
+    // reset
+    setLocationName("");
+    setVideo(null);
+    setRoadQuality(0);
+    setMaterialQuality(0);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-6">
-      
+
       {/* Header */}
       <div className="flex justify-between items-center max-w-4xl mx-auto mb-6">
         <h1 className="text-3xl font-bold text-blue-900">
-          🚧 Field Engineer Panel
+          🚧 Field Engineer Portal
         </h1>
+
         <button
           onClick={() => {
             localStorage.removeItem("currentUser");
             window.location.href = "/login";
           }}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow"
+          className="bg-red-500 text-white px-4 py-2 rounded-lg"
         >
           Logout
         </button>
       </div>
 
-      {/* Card */}
-      <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-6 space-y-6">
+      {/* Form Card */}
+      <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-6 space-y-4">
 
-        {/* Step 1 */}
-        <div className="p-4 bg-blue-50 rounded-xl border">
-          <h2 className="font-semibold text-blue-800 mb-2">
-            📍 Step 1: Capture Location
-          </h2>
+        {/* Location */}
+        <input
+          type="text"
+          placeholder="Enter Location (e.g., NH-48 Surat)"
+          value={locationName}
+          onChange={(e) => setLocationName(e.target.value)}
+          className="w-full border p-2 rounded"
+        />
 
-          <button
-            onClick={captureLocation}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition"
-          >
-            Get GPS Location
-          </button>
+        {/* Video Upload */}
+        <input
+          type="file"
+          accept="video/*"
+          capture="environment"
+          onChange={handleVideoUpload}
+          className="w-full"
+        />
 
-          {location && (
-            <p className="text-green-600 text-sm mt-2 font-mono">
-              ✓ {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-            </p>
-          )}
-        </div>
+        {video && (
+          <video src={video} controls className="w-full rounded mt-2" />
+        )}
 
-        {/* Step 2 */}
-        <div className="p-4 bg-gray-50 rounded-xl border">
-          <h2 className="font-semibold text-gray-800 mb-2">
-            📸 Step 2: Upload Photo
-          </h2>
+        {/* Quality Inputs */}
+        <input
+          type="number"
+          placeholder="Road Quality (0-100)"
+          value={roadQuality}
+          onChange={(e) => setRoadQuality(Number(e.target.value))}
+          className="w-full border p-2 rounded"
+        />
 
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            hidden
-            ref={fileInputRef}
-            onChange={handlePhotoUpload}
-          />
-
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full bg-black hover:bg-gray-800 text-white py-2 rounded-lg"
-          >
-            Open Camera
-          </button>
-
-          {photo && (
-            <img
-              src={photo}
-              className="mt-4 rounded-xl border shadow-md h-48 w-full object-cover"
-            />
-          )}
-        </div>
+        <input
+          type="number"
+          placeholder="Material Quality (0-100)"
+          value={materialQuality}
+          onChange={(e) => setMaterialQuality(Number(e.target.value))}
+          className="w-full border p-2 rounded"
+        />
 
         {/* Submit */}
         <button
           onClick={submitReport}
-          className={`w-full py-3 rounded-xl font-bold text-lg text-white shadow-lg transition ${
-            loading
-              ? "bg-gray-400"
-              : "bg-green-600 hover:bg-green-700 hover:scale-105"
-          }`}
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-bold"
         >
-          {loading ? "⏳ Processing..." : "🚀 Submit Report"}
+          🚀 Submit Inspection
         </button>
       </div>
     </div>

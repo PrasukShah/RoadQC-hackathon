@@ -24,7 +24,8 @@ export default function Signup() {
 
       <select onChange={(e) => setForm({...form, role: e.target.value})} className="border p-2">
         <option value="engineer">Engineer</option>
-        <option value="admin">Admin</option>
+        <option value="contractor">Contractor</option>
+        <option value="inspector">Inspector</option>
       </select>
 
       <button onClick={handleSignup} className="bg-green-600 text-white px-4 py-2 rounded">
