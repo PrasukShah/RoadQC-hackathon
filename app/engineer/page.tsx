@@ -20,7 +20,6 @@ export default function EngineerPage() {
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 🔐 Protect Route
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("currentUser") || "null");
     if (!user || user.role !== "engineer") {
@@ -36,20 +35,18 @@ export default function EngineerPage() {
           lng: pos.coords.longitude,
         });
       },
-      () => alert("Location permission denied")
+      () => alert("Location denied")
     );
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setPhoto(URL.createObjectURL(file));
-    }
+    if (file) setPhoto(URL.createObjectURL(file));
   };
 
   const submitReport = () => {
     if (!location || !photo) {
-      alert("Capture location and photo!");
+      alert("Complete all steps!");
       return;
     }
 
@@ -77,66 +74,92 @@ export default function EngineerPage() {
       setPhoto(null);
       setLoading(false);
 
-      alert("Report submitted!");
+      alert("Report submitted successfully!");
     }, 1500);
   };
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-6">
+      
       {/* Header */}
-      <div className="flex justify-between mb-6">
-        <h1 className="text-2xl font-bold">Engineer Dashboard</h1>
+      <div className="flex justify-between items-center max-w-4xl mx-auto mb-6">
+        <h1 className="text-3xl font-bold text-blue-900">
+          🚧 Field Engineer Panel
+        </h1>
         <button
           onClick={() => {
             localStorage.removeItem("currentUser");
             window.location.href = "/login";
           }}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow"
         >
           Logout
         </button>
       </div>
 
-      <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
-        {/* Location */}
-        <button
-          onClick={captureLocation}
-          className="w-full bg-blue-600 text-white py-2 rounded mb-4"
-        >
-          Capture Location
-        </button>
+      {/* Card */}
+      <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-6 space-y-6">
 
-        {location && (
-          <p className="text-green-600 text-sm">
-            {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
-          </p>
-        )}
+        {/* Step 1 */}
+        <div className="p-4 bg-blue-50 rounded-xl border">
+          <h2 className="font-semibold text-blue-800 mb-2">
+            📍 Step 1: Capture Location
+          </h2>
 
-        {/* Camera */}
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          hidden
-          ref={fileInputRef}
-          onChange={handlePhotoUpload}
-        />
+          <button
+            onClick={captureLocation}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition"
+          >
+            Get GPS Location
+          </button>
 
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-full bg-black text-white py-2 rounded mt-4"
-        >
-          Open Camera
-        </button>
+          {location && (
+            <p className="text-green-600 text-sm mt-2 font-mono">
+              ✓ {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+            </p>
+          )}
+        </div>
 
-        {photo && <img src={photo} className="mt-4 rounded" />}
+        {/* Step 2 */}
+        <div className="p-4 bg-gray-50 rounded-xl border">
+          <h2 className="font-semibold text-gray-800 mb-2">
+            📸 Step 2: Upload Photo
+          </h2>
+
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            ref={fileInputRef}
+            onChange={handlePhotoUpload}
+          />
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full bg-black hover:bg-gray-800 text-white py-2 rounded-lg"
+          >
+            Open Camera
+          </button>
+
+          {photo && (
+            <img
+              src={photo}
+              className="mt-4 rounded-xl border shadow-md h-48 w-full object-cover"
+            />
+          )}
+        </div>
 
         {/* Submit */}
         <button
           onClick={submitReport}
-          className="w-full bg-green-600 text-white py-3 rounded mt-6"
+          className={`w-full py-3 rounded-xl font-bold text-lg text-white shadow-lg transition ${
+            loading
+              ? "bg-gray-400"
+              : "bg-green-600 hover:bg-green-700 hover:scale-105"
+          }`}
         >
-          {loading ? "Submitting..." : "Submit Report"}
+          {loading ? "⏳ Processing..." : "🚀 Submit Report"}
         </button>
       </div>
     </div>

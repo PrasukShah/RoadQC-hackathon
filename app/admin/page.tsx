@@ -14,7 +14,6 @@ type Report = {
 export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
 
-  // 🔐 Protect Route
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("currentUser") || "null");
 
@@ -27,73 +26,90 @@ export default function AdminPage() {
   }, []);
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-gray-100 p-6">
+
       {/* Header */}
-      <div className="flex justify-between mb-6">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+      <div className="flex justify-between items-center max-w-6xl mx-auto mb-6">
+        <h1 className="text-3xl font-bold text-purple-900">
+          🏛️ Government Dashboard
+        </h1>
+
         <button
           onClick={() => {
             localStorage.removeItem("currentUser");
             window.location.href = "/login";
           }}
-          className="bg-red-500 text-white px-4 py-2 rounded"
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow"
         >
           Logout
         </button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white p-6 rounded shadow overflow-x-auto">
+      {/* Table Card */}
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-6 overflow-x-auto">
         <table className="w-full text-left">
+
           <thead>
-            <tr className="bg-gray-200">
-              <th className="p-2">Time</th>
-              <th className="p-2">Photo</th>
-              <th className="p-2">Location</th>
-              <th className="p-2">Score</th>
-              <th className="p-2">Status</th>
+            <tr className="bg-gray-100 text-gray-700">
+              <th className="p-3">Time</th>
+              <th className="p-3">Photo</th>
+              <th className="p-3">Location</th>
+              <th className="p-3">AI Score</th>
+              <th className="p-3">Status</th>
             </tr>
           </thead>
 
           <tbody>
             {reports.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center p-4">
-                  No reports yet
+                <td colSpan={5} className="text-center p-6 text-gray-500">
+                  No reports submitted yet
                 </td>
               </tr>
             ) : (
               reports.map((r) => (
-                <tr key={r.id} className="border-b">
-                  <td className="p-2">{r.timestamp}</td>
+                <tr key={r.id} className="border-b hover:bg-gray-50 transition">
+                  
+                  <td className="p-3 text-sm text-gray-600">{r.timestamp}</td>
 
-                  <td className="p-2">
-                    <img src={r.photoUrl} className="w-16 h-16 object-cover" />
+                  <td className="p-3">
+                    <img
+                      src={r.photoUrl}
+                      className="w-16 h-16 rounded-lg object-cover shadow"
+                    />
                   </td>
 
-                  <td className="p-2 text-sm">
+                  <td className="p-3 text-xs font-mono">
                     {r.latitude.toFixed(4)}, {r.longitude.toFixed(4)}
                   </td>
 
-                  <td className="p-2 font-bold">
-                    {r.aiScore > 75 ? (
-                      <span className="text-green-600">{r.aiScore}</span>
+                  <td className="p-3 font-bold">
+                    <span
+                      className={`px-3 py-1 rounded-full text-white text-sm ${
+                        r.aiScore > 75 ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    >
+                      {r.aiScore}
+                    </span>
+                  </td>
+
+                  <td className="p-3">
+                    {r.isSpoofed ? (
+                      <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                        🚨 Fraud Detected
+                      </span>
                     ) : (
-                      <span className="text-red-500">{r.aiScore}</span>
+                      <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                        ✅ Verified
+                      </span>
                     )}
                   </td>
 
-                  <td className="p-2">
-                    {r.isSpoofed ? (
-                      <span className="text-red-600">FRAUD</span>
-                    ) : (
-                      <span className="text-green-600">Verified</span>
-                    )}
-                  </td>
                 </tr>
               ))
             )}
           </tbody>
+
         </table>
       </div>
     </div>
